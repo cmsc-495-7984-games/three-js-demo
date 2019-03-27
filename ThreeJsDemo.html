@@ -1,0 +1,205 @@
+<html>
+	<head>
+	<title>New Try</title>
+	<style>
+		body { margin: 0; }
+		canvas { width: 100%; height: 100% }
+	</style>
+	</head>
+	<script src="three.js"></script>
+	<body>
+	<script>
+		
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera(28, 1280/720, 0.1, 1000);
+			var	renderer = new THREE.WebGLRenderer({
+				 antialias: true
+				});
+			var lightsFlash = true;
+			var ringsRotate = true;
+			var discoBallSpin = true;
+			var animationSpeed = 3;
+			
+			renderer.setSize( 1280, 720 );
+			document.body.appendChild( renderer.domElement );
+
+			var geometry = new THREE.TorusGeometry( 1, 0.13, 5, 26 );
+			var material = new
+			THREE.MeshPhongMaterial( {
+				color: 0x080808,
+				specular: 0xffffff,
+				shininess: 150,
+
+			} );
+			var bigTorus = new THREE.Mesh( geometry, material );
+			scene.add( bigTorus );
+
+			geometry = new THREE.TorusGeometry( 0.6, 0.078, 3, 50 );
+			material = new
+			THREE.MeshPhongMaterial( {
+				color: 0x050505,
+				specular: 0xffffff,
+				shininess: 200,
+			} );
+			var lilTorus = new THREE.Mesh( geometry, material );
+			scene.add( lilTorus );
+
+			geometry = new THREE.SphereGeometry( .4, 20, 20 );
+			material = new
+			THREE.MeshPhongMaterial( {
+				color: 0x010101,
+				specular: 0xffffff,
+				shininess: 200,
+				shading: THREE.FlatShading
+			} );
+			var centerBall = new THREE.Mesh( geometry, material );
+			scene.add( centerBall );
+			
+			
+			var spireGeom = new THREE.TorusGeometry( 0.6, 0.078, 3, 3 );
+			var ballGeom = new THREE.SphereGeometry( .4, 20, 20, 0, 5 );
+			var smBallGeom = new THREE.SphereGeometry( .2, 20, 20 );
+
+			var openSpheres = [];
+			var smBalls = [];
+			var spires = [];
+
+			var radius = 2;
+			var numObjects = 4;
+			var segments = 360/(numObjects * 2);
+			var angle = 0;
+
+			for(var i = 0; i < numObjects; i++) {
+				var openSphere = {};
+				openSpheres.push( openSphere );
+				openSphere.obj = new THREE.Mesh( ballGeom, new
+					THREE.MeshPhongMaterial( {
+						color: 0x010101,
+						specular: 0xffffff,
+						shininess: 300,
+						side: THREE.DoubleSide,
+					} )
+				);
+
+				openSphere.x = radius*(Math.cos((angle*(Math.PI/180))));
+				openSphere.y = radius*(Math.sin((angle*(Math.PI/180))));
+				openSphere.z = 0;
+				openSphere.obj.position.set(openSphere.x, openSphere.y, openSphere.z);
+				
+				scene.add(openSphere.obj);
+
+				var smBall = {};
+				smBalls.push( smBall );
+				smBall.obj = new THREE.Mesh( smBallGeom, new
+					THREE.MeshPhongMaterial( {
+						color: 0xffffff,
+						specular: 0xffffff,
+						shininess: 200,
+					} )
+				);
+
+				smBall.x = radius*(Math.cos((angle*(Math.PI/180))));
+				smBall.y = radius*(Math.sin((angle*(Math.PI/180))));
+				smBall.z = 0;
+				smBall.obj.position.set(smBall.x, smBall.y, smBall.z);
+				scene.add(smBall.obj);
+				
+				angle = angle + segments;
+
+				var spire = {};
+				spires.push( spire );
+				spire.obj = new THREE.Mesh( spireGeom, new
+					THREE.MeshPhongMaterial( {
+						color: 0x000000,
+						specular: 0xffffff,
+						shininess: 100,
+					} )
+				);
+				spire.x = radius*(Math.cos((angle*(Math.PI/180))));
+				spire.y = radius*(Math.sin((angle*(Math.PI/180))));
+				spire.z = 1;
+				spire.obj.scale.set(2, .3, 1);
+				spire.obj.rotateZ(angle*(Math.PI/180));
+				spire.obj.position.set(spire.x, spire.y, spire.z);
+				scene.add(spire.obj);
+
+				angle = angle + segments;
+			};
+			
+			var numLights = 5;
+			var lightColors = [0xae0d7a, 0x448d76, 0x340926, 0xfcba12, 0xffffff];
+			var lights = [];
+			
+			for(let i = 0; i < numLights; i++) {
+				var light = {};
+				lights.push(light);
+				
+				light.obj = new THREE.PointLight( lightColors[i], 2, 3 );
+				
+				if(i !== 4) {
+					light.x = smBalls[i].x;   
+					light.y = smBalls[i].y;
+					light.z = smBalls[i].z;
+				} else {
+					light.x = 0;
+					light.y = 0;
+					light.z = 0;
+				}
+				
+				light.obj.position.set(light.x, light.y, light.z);
+				scene.add(light.obj);
+			};
+			camera.position.z = 13;
+			
+			var clock = 0;
+			
+			var animate = function () {
+				requestAnimationFrame(animate);
+				
+				if(ringsRotate){
+					bigTorus.rotation.x += .02*animationSpeed;
+					lilTorus.rotation.y	-= .01*animationSpeed;
+				}
+				if(discoBallSpin){
+					centerBall.rotation.y += .01*animationSpeed;
+					centerBall.rotation.z += .02*animationSpeed;
+				}
+				
+				if(lightsFlash) {
+					for(let i = 0; i < lights.length; i++) {
+						var light = lights[i];
+						if((clock % 50/animationSpeed) === 0) {
+							if(Math.random() < .5){
+								light.obj.intensity = 0;
+							}else{
+								light.obj.intensity = 1;
+							}
+						}else if((clock% 30/animationSpeed) === 0) {
+							if(Math.random() < .5){
+								light.obj.intensity = 5;
+							}else {
+								light.obj.intensity = 3;
+							}
+						}					
+					}
+				}
+				
+				for(var i = 0; i < spires.length; i++) {
+					var spire = spires[i];
+					var openSphere = openSpheres[i];
+					
+					openSphere.obj.rotation.x += 0.01*animationSpeed;
+					openSphere.obj.rotation.y += 0.024*animationSpeed;
+					if(spire.obj.x < 0) {
+						spire.obj.rotation.y += 0.012*animationSpeed;
+					} else {
+						spire.obj.rotation.y -= 0.012*animationSpeed;
+					}
+				}
+				clock++;
+				renderer.render(scene, camera);
+			};
+			animate();
+		</script>
+	</body>
+</html>
